@@ -14,13 +14,13 @@ Currently supported countries: The Netherlands, Belgium, and Luxembourg.
 Use composer to install this package
 
 ```bash
-$ composer require apicheck/php-client:1.0
+$ composer require api-check/php-client:^1.0
 ```
 
 ```json
 {
   "require": {
-    "apicheck/php-client": "^1.0"
+    "api-check/php-client": "^1.0"
   }
 }
 ```
