@@ -1,5 +1,5 @@
 {
-  "name": "apicheck/php-client",
+  "name": "api-check/php-client",
   "description": "A wrapper around ApiCheck get to validate addresses.",
   "keywords": [
       "apicheck",
