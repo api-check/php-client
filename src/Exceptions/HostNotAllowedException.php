@@ -2,4 +2,6 @@
 
 namespace ApiCheck\Api\Exceptions;
 
-class HostNotAllowedException extends \Exception {}
+class HostNotAllowedException extends \Exception
+{
+}

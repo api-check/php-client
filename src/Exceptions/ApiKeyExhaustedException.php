@@ -2,4 +2,6 @@
 
 namespace ApiCheck\Api\Exceptions;
 
-class ApiKeyExhaustedException extends \Exception {}
+class ApiKeyExhaustedException extends \Exception
+{
+}

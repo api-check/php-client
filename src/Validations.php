@@ -74,7 +74,7 @@ class Validations
 
     /**
      * Validate streetNumber based on country
-     * 
+     *
      * @param string|int $streetNumber
      * @return array
      * @throws ValidationException
@@ -90,7 +90,7 @@ class Validations
 
     /**
      * Validate streetNumberSuffix based on country
-     * 
+     *
      * @param string $streetNumberSuffix
      * @return string
      * @throws ValidationException

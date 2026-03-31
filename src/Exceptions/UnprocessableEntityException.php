@@ -2,4 +2,6 @@
 
 namespace ApiCheck\Api\Exceptions;
 
-class UnprocessableEntityException extends \Exception {}
+class UnprocessableEntityException extends \Exception
+{
+}

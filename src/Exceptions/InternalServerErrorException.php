@@ -2,4 +2,6 @@
 
 namespace ApiCheck\Api\Exceptions;
 
-class InternalServerErrorException extends \Exception {}
+class InternalServerErrorException extends \Exception
+{
+}

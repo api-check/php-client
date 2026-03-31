@@ -2,4 +2,6 @@
 
 namespace ApiCheck\Api\Exceptions;
 
-class ValidationException extends \Exception {}
+class ValidationException extends \Exception
+{
+}

@@ -2,4 +2,6 @@
 
 namespace ApiCheck\Api\Exceptions;
 
-class ApiKeyHeaderException extends \Exception {}
+class ApiKeyHeaderException extends \Exception
+{
+}

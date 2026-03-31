@@ -10,10 +10,8 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\RequestOptions;
-
 // Exceptions
 use ApiCheck\Api\Exceptions\ApiException;
-
 // Sub-clients
 use ApiCheck\Api\Lookup\LookupClient;
 use ApiCheck\Api\Search\SearchClient;

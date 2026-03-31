@@ -2,4 +2,6 @@
 
 namespace ApiCheck\Api\Exceptions;
 
-class PageNotFoundException extends \Exception {}
+class PageNotFoundException extends \Exception
+{
+}
