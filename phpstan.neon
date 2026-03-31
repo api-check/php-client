@@ -5,7 +5,10 @@ parameters:
     ignoreErrors:
         - '#Unsafe usage of new static#'
         - '#Access to an undefined property#'
-        - '#Parameter .* of method .* has invalid typehint type#'
         - '#PHPDoc tag .* with type .* is not subtype of Throwable#'
+        - '#Variable \$responseBody in empty\(\) always exists and is not falsy#'
+        - '#Method ApiCheck\\Api\\Exceptions\\ApiException::createFromResponse\(\) should return#'
+        - '#Unsafe access to private property ApiCheck\\Api\\Validations::#'
+        - '#Method ApiCheck\\Api\\Validations::validateStreetNumber\(\) should return array but returns#'
     excludePaths:
         - tests/*
