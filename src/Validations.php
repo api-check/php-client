@@ -37,7 +37,7 @@ class Validations
     /**
      * @var array
      */
-    private static $supportedCountries = ['nl', 'be', 'lu'];
+    private static $supportedCountries = ['nl', 'lu'];
 
     /**
      * @var string

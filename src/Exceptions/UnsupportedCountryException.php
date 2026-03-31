@@ -2,6 +2,4 @@
 
 namespace ApiCheck\Api\Exceptions;
 
-class UnsupportedCountryException extends \Exception {
-    
-}
+class UnsupportedCountryException extends \Exception {}

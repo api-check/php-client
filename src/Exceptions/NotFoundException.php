@@ -2,6 +2,4 @@
 
 namespace ApiCheck\Api\Exceptions;
 
-class NotFoundException extends \Exception {
-    
-}
+class NotFoundException extends \Exception {}

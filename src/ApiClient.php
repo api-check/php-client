@@ -13,8 +13,11 @@ use GuzzleHttp\RequestOptions;
 
 // Exceptions
 use ApiCheck\Api\Exceptions\ApiException;
-use ApiCheck\Api\Exceptions\UnsupportedCountryException;
-use ApiCheck\Api\Exceptions\ValidationException;
+
+// Sub-clients
+use ApiCheck\Api\Lookup\LookupClient;
+use ApiCheck\Api\Search\SearchClient;
+use ApiCheck\Api\Verify\VerifyClient;
 
 class ApiClient
 {
@@ -31,54 +34,64 @@ class ApiClient
     /**
      * Version of the ApiCheck Client
      */
-    const VERSION = '1.0.0';
+    const VERSION = '2.0.0';
 
     /**
-     * What Client do we need to use for requests?
-     *
      * @var ClientInterface
      */
     protected $httpClient;
 
     /**
-     * The default ApiCheck endpoint
-     *
      * @var string
      */
     protected $apiEndpoint = self::ENDPOINT;
 
     /**
-     * The ApiCheck API version to use
-     *
      * @var string
      */
     protected $apiVersion = self::API_VERSION;
 
     /**
-     *  Set the default ApiCheck ApiKey
-     *
      * @var string
      */
     protected $apiKey;
 
+    /**
+     * @var string|null
+     */
+    protected $referer;
 
     /**
-     * ApiClient constructor function
-     *
-     * @param ClientInterface|null $httpClient
-     * @throws ApiCheckException
+     * @var LookupClient
      */
-    public function __construct(ClientInterface $httpClient = null)
+    protected $lookupClient;
+
+    /**
+     * @var SearchClient
+     */
+    protected $searchClient;
+
+    /**
+     * @var VerifyClient
+     */
+    protected $verifyClient;
+
+    /**
+     * @param ClientInterface|null $httpClient
+     */
+    public function __construct(?ClientInterface $httpClient = null)
     {
-        $this->httpClient = $httpClient ?  $httpClient : new Client();
+        $this->httpClient = $httpClient ? $httpClient : new Client();
+        $this->lookupClient = new LookupClient($this);
+        $this->searchClient = new SearchClient($this);
+        $this->verifyClient = new VerifyClient($this);
     }
 
     /**
-     * Set the APiCheck API key
+     * Set the ApiCheck API key.
      *
      * @param string $apiKey
      * @return ApiClient
-     * @throws ApiCheckException
      */
     public function setApiKey($apiKey)
     {
@@ -87,130 +100,229 @@ class ApiClient
     }
 
     /**
-     * Execute calls with the lookup endpoint for each country
-     * 
+     * Set an optional Referer header sent with every request.
+     * Required when your API key has Allowed Hosts configured.
+     *
+     * @param string $referer
+     * @return ApiClient
+     */
+    public function setReferer($referer)
+    {
+        $this->referer = $referer;
+        return $this;
+    }
+
+    /**
+     * Get the API version.
+     *
+     * @return string
+     */
+    public function getApiVersion()
+    {
+        return $this->apiVersion;
+    }
+
+    // -------------------------------------------------------------------------
+    // Lookup API
+    // -------------------------------------------------------------------------
+
+    /**
+     * Look up an address by postal code and house number.
+     *
+     * Supported countries: nl, lu
+     *
+     * Optional keys in $query:
+     *   fields     (array)  – return only specific response fields
+     *   aliasses   (bool)   – include subaddress (nevenadres) relationships
+     *   shortening (bool)   – include streetShort field in response
+     *
      * @param string $country
-     * @param array $query
+     * @param array  $query
      * @return stdClass
-     * @throws ApiCheckException
+     * @throws UnsupportedCountryException
+     * @throws ValidationException
+     * @throws ApiException
      */
     public function lookup($country, $query = [])
     {
-        switch ($country) {
-            case 'nl':
-            case 'lu':
-                // Do validations
-                $postalCode = $this->validateQueryField($country, $query, 'postalcode', true);
-                $number = $this->validateQueryField($country, $query, 'number', true);
-                $numberAddition = $this->validateQueryField($country, $query, 'numberAddition');
-                // Execute API call
-                $response = $this->doRequest('GET', "lookup/{$this->apiVersion}/postalcode/{$country}", ['postalcode' => $postalCode, 'number' => $number, 'numberAddition' => $numberAddition]);
-                break;
-            default:
-                throw new UnsupportedCountryException("No lookup action available for country: ({$country})");
-                break;
-        }
-        return $response;
+        return $this->lookupClient->lookup($country, $query);
     }
 
     /**
-     * Execute calls with the search endpoint for each country
-     * 
+     * Retrieve available number additions for a postal code + number combination.
+     *
+     * @param string     $country
+     * @param string     $postalcode
+     * @param string|int $number
+     * @return stdClass
+     * @throws UnsupportedCountryException
+     * @throws ValidationException
+     * @throws ApiException
+     */
+    public function getNumberAdditions($country, $postalcode, $number)
+    {
+        return $this->lookupClient->getNumberAdditions($country, $postalcode, $number);
+    }
+
+    // -------------------------------------------------------------------------
+    // Search API
+    // -------------------------------------------------------------------------
+
+    /**
+     * Search for cities, streets, postal codes, or addresses within a country.
+     *
+     * Supported types: city, street, postalcode, address, locality, municipality
+     * Supported countries: 18 European countries (see SEARCH_COUNTRIES)
+     *
      * @param string $country
      * @param string $type
-     * @param array $query
+     * @param array  $query  Pass 'name' (required for most types) plus optional filters
      * @return stdClass
-     * @throws ApiCheckException
+     * @throws UnsupportedCountryException
+     * @throws ApiException
      */
     public function search($country, $type, $query = [])
     {
-        $allowed_types = ['city', 'street', 'postalcode', 'address'];
-
-        if (in_array($type, $allowed_types)) {
-            switch ($country) {
-                case 'nl':
-                case 'lu':
-                case 'fr':
-                case 'be':
-                    // Execute API call
-                    $response = $this->doRequest('GET', "search/{$this->apiVersion}/{$type}/{$country}", $query);
-                    break;
-                default:
-                    throw new UnsupportedCountryException("Given country is not supported: ({$country})");
-                    break;
-            }
-            return $response;
-        } else {
-            throw new UnsupportedCountryException("This type does not exist: ({$type})");
-        }
+        return $this->searchClient->search($country, $type, $query);
     }
 
     /**
-     * Validate the inputs given in the query array
-     * 
-     * @param string $country
-     * @param array $query
-     * @param string $fieldName
-     * @param boolean $required
-     * @param boolean $validation
-     * @return stdClass|null
-     * @throws ValidationException
-     */
-    private function validateQueryField($country, $query, $fieldName, $required = false, $validation = true)
-    {
-        $validator = new Validations($country);
-        if (isset($query[$fieldName])) {
-            if ($validation == true) {
-                switch ($fieldName) {
-                        // Some fields also have custom validators. We check them here.
-                    case 'number':
-                        return $validator->validateStreetNumber($query[$fieldName]);
-                        break;
-                    case 'numberAddition':
-                        return $validator->validateStreetNumberSuffix($query[$fieldName]);
-                        break;
-                    case 'postalcode':
-                        return $validator->validatePostalCode($query[$fieldName]);
-                        break;
-                    default:
-                        return $query[$fieldName];
-                        break;
-                }
-            } else {
-                return $query[$fieldName];
-            }
-        } else {
-            if ($required == true) {
-                throw new ValidationException("The field '{$fieldName}' is not present in the query array for country: ({$country})");
-            } else {
-                return null;
-            }
-        }
-    }
-
-    /**
-     * Execute the HTTP request to APiCheck
+     * Global search across all scopes (streets, cities, postal codes, residences).
      *
-     * @param string $httpMethod
-     * @param string $method
-     * @param array $httpParams
+     * @param string $country  ISO 3166-1 alpha-2 country code
+     * @param string $query    Search term (use "*" to disable keyword search)
+     * @param array  $options  Optional: limit, city_id, locality_id, street_id,
+     *                         postalcode_id, municipality_id, fields, translations
+     * @return stdClass
+     * @throws UnsupportedCountryException
+     * @throws ApiException
+     */
+    public function globalSearch($country, $query, $options = [])
+    {
+        return $this->searchClient->globalSearch($country, $query, $options);
+    }
+
+    /**
+     * Search for localities (deelgemeenten) by name. Primarily relevant for Belgium.
+     *
+     * @param string $country
+     * @param string $name
+     * @param array  $options  Optional: limit, locality_id, postalcode_id, municipality_id, translations
+     * @return stdClass
+     * @throws UnsupportedCountryException
+     * @throws ApiException
+     */
+    public function searchLocality($country, $name, $options = [])
+    {
+        return $this->searchClient->searchLocality($country, $name, $options);
+    }
+
+    /**
+     * Search for municipalities (gemeenten) by name. Primarily relevant for Belgium.
+     *
+     * @param string $country
+     * @param string $name
+     * @param array  $options  Optional: limit, translations
+     * @return stdClass
+     * @throws UnsupportedCountryException
+     * @throws ApiException
+     */
+    public function searchMunicipality($country, $name, $options = [])
+    {
+        return $this->searchClient->searchMunicipality($country, $name, $options);
+    }
+
+    /**
+     * Resolve a full address using IDs returned from city/street/postalcode searches.
+     *
+     * @param string $country
+     * @param array  $params  Optional: number, numberAddition, street_id, city_id,
+     *                        locality_id, postalcode_id, municipality_id, translations, limit
+     * @return stdClass
+     * @throws UnsupportedCountryException
+     * @throws ApiException
+     */
+    public function searchAddress($country, $params = [])
+    {
+        return $this->searchClient->searchAddress($country, $params);
+    }
+
+    /**
+     * Retrieve the live list of countries supported by the Search API.
+     *
+     * @return stdClass
+     * @throws ApiException
+     */
+    public function getSupportedSearchCountries()
+    {
+        return $this->searchClient->getSupportedSearchCountries();
+    }
+
+    // -------------------------------------------------------------------------
+    // Verify API
+    // -------------------------------------------------------------------------
+
+    /**
+     * Verify an email address.
+     *
+     * Returns an object with: disposable_email (bool), greylisted (bool),
+     * status ("valid" | "invalid" | "unknown")
+     *
+     * @param string $email
+     * @return stdClass
+     * @throws ApiException
+     */
+    public function verifyEmail($email)
+    {
+        return $this->verifyClient->verifyEmail($email);
+    }
+
+    /**
+     * Verify a phone number.
+     *
+     * Returns an object with: valid (bool), and on success details including
+     * country_code, area_code, international_formatted, number_type, etc.
+     *
+     * @param string $number  Phone number including country code (e.g. +31612345678)
+     * @return stdClass
+     * @throws ApiException
+     */
+    public function verifyPhone($number)
+    {
+        return $this->verifyClient->verifyPhone($number);
+    }
+
+    // -------------------------------------------------------------------------
+    // Internal helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Execute an HTTP request to ApiCheck.
+     *
+     * @param string      $httpMethod
+     * @param string      $method
+     * @param array       $httpParams
      * @param string|null $httpBody
      * @return stdClass
-     * @throws ApiCheckException
+     * @throws ApiException
      */
-    private function doRequest($httpMethod, $method, $httpParams = [], $httpBody = null)
+    public function doRequest($httpMethod, $method, $httpParams = [], $httpBody = null)
     {
         if (empty($this->apiKey)) {
-            throw ApiCheckException::create('No API-key has been set.');
+            throw ApiException::create('No API-key has been set.');
         }
 
         $url = $this->apiEndpoint . '/' . $method;
 
         $headers = [
-            'Accept' => 'application/json',
+            'Accept'       => 'application/json',
             'Content-Type' => 'application/json',
-            'X-API-KEY' => $this->apiKey
+            'X-API-KEY'    => $this->apiKey,
         ];
+
+        if (!empty($this->referer)) {
+            $headers['Referer'] = $this->referer;
+        }
 
         $url .= '?' . urldecode(http_build_query($httpParams));
         $request = new Request($httpMethod, $url, $headers, $httpBody);
@@ -218,26 +330,26 @@ class ApiClient
         try {
             $response = $this->httpClient->send($request, [RequestOptions::HTTP_ERRORS => false]);
         } catch (GuzzleException $exception) {
-            throw ApiCheckException::createFromGuzzleException($exception);
+            throw new ApiException($exception->getMessage(), 0, $exception);
         }
 
         return $this->parseResponse($response);
     }
 
     /**
-     * Parse, and return the request as object
+     * Parse the HTTP response and return the data object.
      *
      * @param ResponseInterface $response
-     * @return stdClass|null
-     * @throws ApiCheckException
+     * @return stdClass
+     * @throws ApiException
      */
     private function parseResponse(ResponseInterface $response)
     {
-        $statusCode = $response->getStatusCode();
+        $statusCode   = $response->getStatusCode();
         $responseBody = $response->getBody();
 
         if (empty($responseBody)) {
-            throw ApiCheckException::create('The ApiCheck response has no body');
+            throw ApiException::create('The ApiCheck response has no body');
         }
 
         $jsonObject = json_decode($responseBody);
@@ -247,10 +359,14 @@ class ApiClient
         }
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw ApiCheckException::create("Unable to JSON decode the ApiCheck response: {$responseBody}");
+            throw ApiException::create("Unable to JSON decode the ApiCheck response: {$responseBody}");
         }
 
-        // Result was ok
+        // Handle API-level errors returned with a 2xx status (e.g. no_exact_match)
+        if (isset($jsonObject->error) && $jsonObject->error === true) {
+            throw ApiException::createFromResponse($response);
+        }
+
         return $jsonObject->data;
     }
 }

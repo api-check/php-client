@@ -1,12 +1,13 @@
 {
   "name": "api-check/php-client",
-  "description": "A wrapper around ApiCheck get to validate addresses.",
+  "description": "A wrapper around ApiCheck API to validate addresses.",
   "keywords": [
-      "apicheck",
-      "laravel",
-      "addressvalidation",
-      "postalcodeapi",
-      "addressapi"
+    "apicheck",
+    "laravel",
+    "address-validation",
+    "postal-code",
+    "address-api",
+    "address-verification"
   ],
   "homepage": "https://apicheck.nl/",
   "license": "MIT",
@@ -19,17 +20,18 @@
     }
   ],
   "require": {
-    "php": "^7.1|^8.0",
+    "php": "^7.4|^8.0|^8.1|^8.2|^8.3|^8.5",
     "ext-curl": "*",
     "ext-json": "*",
-    "guzzlehttp/guzzle": "^6.4|^7.0"
+    "guzzlehttp/guzzle": "^7.0"
   },
   "require-dev": {
-    "orchestra/testbench": "3.8.*|4.*|5.*|6.*",
-    "phpunit/phpunit": "^7.0|^8.0|^9.0"
+    "phpunit/phpunit": "^9.0|^10.0|^11.0"
   },
   "config": {
-    "sort-packages": true
+    "sort-packages": true,
+    "optimize-autoloader": true,
+    "prefer-stable": true
   },
   "autoload": {
     "psr-4": {
@@ -42,6 +44,17 @@
     }
   },
   "scripts": {
-    "test": "./vendor/bin/phpunit tests"
-  }
+    "test": "phpunit --dont-report-useless-tests --no-coverage",
+    "test:coverage": "phpunit --coverage-html coverage --dont-report-useless-tests",
+    "analyze": "phpstan analyse --memory-limit=2G",
+    "cs:check": "phpcs --standard=PSR12 src tests",
+    "cs:fix": "phpcbf --standard=PSR12 src tests",
+    "quality": [
+      "@cs:check",
+      "@analyze",
+      "@test"
+    ]
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }

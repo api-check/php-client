@@ -1,25 +1,45 @@
 <?php
 
+/**
+ * Example: Basic address lookup in Luxembourg
+ *
+ * This example demonstrates how to look up a Luxembourgish address using
+ * postal code and house number.
+ */
+
 use ApiCheck\Api\ApiClient;
+use ApiCheck\Api\Exceptions\ApiException;
 use ApiCheck\Api\Exceptions\NotFoundException;
 use ApiCheck\Api\Exceptions\ValidationException;
 use ApiCheck\Api\Exceptions\UnsupportedCountryException;
 
-require "./vendor/autoload.php";
+require __DIR__ . "/../../vendor/autoload.php";
 
-$apicheckClient = new ApiClient();
-$apicheckClient->setApiKey("YOUR_API_KEY");
+// Initialize the client
+$client = new ApiClient();
+$client->setApiKey("8weX4nJq29fHBDrQFlOoYVcPEbWTIxCp");
 
 try {
-    // Lookup example for Luxembourg
-    $address = $apicheckClient->lookup('lu', ['postalcode' => '9242', 'number' => 8]);
-    print("🥳 Yay! We have a result: \n $address->street $address->number \n $address->postalcode $address->city \n {$address->Country->name}");
+    // Basic lookup: find an address by postal code and house number
+    $address = $client->lookup('lu', [
+        'postalcode' => '9242',
+        'number' => '8'
+    ]);
 
-    // Some of the exceptions that can happen.
+    echo "Address found!\n";
+    echo "Street: {$address->street} {$address->number}\n";
+    echo "Postal code: {$address->postalcode}\n";
+    echo "City: {$address->city}\n";
+    echo "Country: {$address->Country->name}\n";
+    $lat = $address->Location->Coordinates->latitude ?? 'N/A';
+    $lng = $address->Location->Coordinates->longitude ?? 'N/A';
+    echo "Latitude: {$lat}, Longitude: {$lng}\n";
 } catch (NotFoundException $e) {
-    print("No results found: $e");
+    echo "Address not found: {$e->getMessage()}\n";
 } catch (ValidationException $e) {
-    print("Field validation error: $e");
+    echo "Validation error: {$e->getMessage()}\n";
 } catch (UnsupportedCountryException $e) {
-    print("Country-code not supported: $e");
+    echo "Unsupported country: {$e->getMessage()}\n";
+} catch (ApiException $e) {
+    echo "API error: {$e->getMessage()}\n";
 }

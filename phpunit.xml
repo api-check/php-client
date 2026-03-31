@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd"
+    bootstrap="vendor/autoload.php"
+    colors="true"
+    beStrictAboutOutputDuringTests="false"
+    failOnRisky="false"
+    failOnWarning="false"
+    cacheDirectory=".phpunit.cache"
+    executionOrder="random"
+    resolveDependencies="true">
+
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+
+    <source>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+    </source>
+
+    <php>
+        <env name="API_CHECK_API_KEY" value="test-api-key-12345" />
+        <env name="API_CHECK_REFERER" value="https://example.com" />
+    </php>
+</phpunit>

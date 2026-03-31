@@ -9,8 +9,9 @@ use Psr\Http\Message\ResponseInterface;
 class ApiException extends Exception
 {
     const NO_RESULTS_STATUS = 'no_match';
+    const NO_EXACT_MATCH = 'no_exact_match';
     const API_KEY_INVALID = 'api_key_invalid';
-    const API_KEY_EXHAUSTED = 'api_key_invalid';
+    const API_KEY_EXHAUSTED = 'api_key_exhausted';
     const HOST_NOT_ALLOWED = 'host_not_allowed';
     const NO_API_KEY_HEADER = 'no_api_key_header';
 
@@ -22,7 +23,7 @@ class ApiException extends Exception
      */
     public static function create($message)
     {
-        return new Exception($message);
+        return new static($message);
     }
 
     /**
@@ -33,7 +34,7 @@ class ApiException extends Exception
      * @return ApiException
      * @throws ApiException
      */
-    public static function createFromResponse($response, Throwable $previous = null)
+    public static function createFromResponse($response, ?Throwable $previous = null)
     {
         $responseBody = json_decode($response->getBody());
 
@@ -43,6 +44,9 @@ class ApiException extends Exception
                     switch ($responseBody->name) {
                         case self::NO_RESULTS_STATUS:
                             return new NotFoundException('No matches found', $response->getStatusCode(), $previous);
+                        case self::NO_EXACT_MATCH:
+                            $numberAdditions = isset($responseBody->numberAdditions) ? (array) $responseBody->numberAdditions : [];
+                            return new NoExactMatchException('No exact match found', $response->getStatusCode(), $previous, $numberAdditions);
                         case self::API_KEY_INVALID:
                             return new ApiKeyInvalidException('The supplied API key is invalid or disabled.', $response->getStatusCode(), $previous);
                         case self::API_KEY_EXHAUSTED:
@@ -70,7 +74,8 @@ class ApiException extends Exception
                 return new PageNotFoundException('This page does not exists (404)', $response->getStatusCode(), $previous);
 
             case 422:
-                return new UnprocessableEntityException("Unprocessable Entity (433): {$responseBody->message}", $response->getStatusCode(), $previous);
+                $detail = isset($responseBody->description) ? $responseBody->description : (isset($responseBody->message) ? $responseBody->message : '');
+                return new UnprocessableEntityException("Unprocessable Entity (422): {$detail}", $response->getStatusCode(), $previous);
 
             case 500:
                 return new InternalServerErrorException('Internal server error (500)', $response->getStatusCode(), $previous);

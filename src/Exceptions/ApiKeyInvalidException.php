@@ -2,6 +2,4 @@
 
 namespace ApiCheck\Api\Exceptions;
 
-class ApiKeyInvalidException extends \Exception {
-    
-}
+class ApiKeyInvalidException extends \Exception {}
