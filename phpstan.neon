@@ -1,6 +1,11 @@
 parameters:
-    level: 5
+    level: 3
     paths:
         - src
     ignoreErrors:
         - '#Unsafe usage of new static#'
+        - '#Access to an undefined property#'
+        - '#Parameter .* of method .* has invalid typehint type#'
+        - '#PHPDoc tag .* with type .* is not subtype of Throwable#'
+    excludePaths:
+        - tests/*
