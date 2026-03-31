@@ -46,7 +46,7 @@
   "scripts": {
     "test": "phpunit --dont-report-useless-tests --no-coverage",
     "test:coverage": "phpunit --coverage-html coverage --dont-report-useless-tests",
-    "analyze": "phpstan analyse --memory-limit=2G",
+    "analyze": "phpstan analyse src tests --memory-limit=2G",
     "cs:check": "phpcs --standard=PSR12 --warning-severity=0 src tests",
     "cs:fix": "phpcbf --standard=PSR12 src tests",
     "quality": [
