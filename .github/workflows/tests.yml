@@ -13,14 +13,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        php: ['7.4', '8.0', '8.1', '8.2', '8.3']
-        dependencies: [highest]
-        include:
-          - os: ubuntu-latest
-            php: '7.4'
-            dependencies: lowest
+        php: ['8.0', '8.1', '8.2', '8.3']
 
-    name: PHP ${{ matrix.php }} (${{ matrix.dependencies }} dependencies) on ${{ matrix.os }}
+    name: PHP ${{ matrix.php }} on ${{ matrix.os }}
 
     steps:
       - name: Checkout code
@@ -46,12 +41,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        run: |
-          if [ "${{ matrix.dependencies }}" = "lowest" ]; then
-            composer update --no-interaction --no-progress --prefer-dist --prefer-lowest --prefer-stable
-          else
-            composer update --no-interaction --no-progress --prefer-dist --prefer-stable
-          fi
+        run: composer update --no-interaction --no-progress --prefer-dist --prefer-stable
 
       - name: Execute tests
         run: composer test

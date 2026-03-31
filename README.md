@@ -12,7 +12,7 @@ A PHP client for the ApiCheck API. Validate addresses, search locations, and ver
 
 ## Requirements
 
-- PHP 7.4 or higher
+- PHP 8.0 or higher
 - Register an account at [ApiCheck Dashboard](https://app.apicheck.nl/authentication/register)
 - Create an API key
 
