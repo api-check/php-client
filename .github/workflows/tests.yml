@@ -47,7 +47,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer update --no-interaction --no-progress --prefer-dist --prefer-${{ matrix.dependencies }}
+          if [ "${{ matrix.dependencies }}" = "lowest" ]; then
+            composer update --no-interaction --no-progress --prefer-dist --prefer-lowest --prefer-stable
+          else
+            composer update --no-interaction --no-progress --prefer-dist --prefer-stable
+          fi
 
       - name: Execute tests
         run: composer test
